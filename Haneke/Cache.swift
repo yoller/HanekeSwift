@@ -99,6 +99,14 @@ public class Cache<T: DataConvertible where T.Result == T, T : DataRepresentable
         return fetch
     }
     
+    public func fetchFromMemory(key key : String, formatName : String = HanekeGlobals.Cache.OriginalFormatName) -> T? {
+        if let (_, memoryCache, _) = self.formats[formatName], let wrapper = memoryCache.objectForKey(key) as? ObjectWrapper {
+            return wrapper.value as? T
+        } else {
+            return nil
+        }
+    }
+    
     public func fetch(fetcher fetcher : Fetcher<T>, formatName: String = HanekeGlobals.Cache.OriginalFormatName, failure fail : Fetch<T>.Failer? = nil, success succeed : Fetch<T>.Succeeder? = nil) -> Fetch<T> {
         let key = fetcher.key
         let fetch = Cache.buildFetch(failure: fail, success: succeed)
