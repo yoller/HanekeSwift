@@ -100,11 +100,38 @@ public class Cache<T: DataConvertible where T.Result == T, T : DataRepresentable
     }
     
     public func fetchFromMemory(key key : String, formatName : String = HanekeGlobals.Cache.OriginalFormatName) -> T? {
-        if let (_, memoryCache, _) = self.formats[formatName], let wrapper = memoryCache.objectForKey(key) as? ObjectWrapper {
-            return wrapper.value as? T
+        if let (_, memoryCache, diskCache) = self.formats[formatName] {
+            
+            if let wrapper = memoryCache.objectForKey(key) as? ObjectWrapper {
+                return wrapper.value as? T
+            }
+            
+            let path = diskCache.pathForKey(key)
+            
+            do {
+                
+                let data = try NSData(contentsOfFile: path, options: NSDataReadingOptions())
+                
+                let value = T.convertFromData(data)
+                
+                if let value = value {
+                    let descompressedValue = self.decompressedImageIfNeeded(value)
+                    let wrapper = ObjectWrapper(value: descompressedValue)
+                    memoryCache.setObject(wrapper, forKey: key)
+                    return wrapper.value as? T
+                }
+                
+                diskCache.updateDiskAccessDateAtPath(path)
+                
+            } catch {
+                
+            }
+            
         } else {
             return nil
         }
+        
+        return nil
     }
     
     public func fetch(fetcher fetcher : Fetcher<T>, formatName: String = HanekeGlobals.Cache.OriginalFormatName, failure fail : Fetch<T>.Failer? = nil, success succeed : Fetch<T>.Succeeder? = nil) -> Fetch<T> {

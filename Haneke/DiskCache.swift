@@ -184,7 +184,7 @@ public class DiskCache {
         self.controlCapacity()
     }
     
-    private func updateDiskAccessDateAtPath(path: String) -> Bool {
+    public func updateDiskAccessDateAtPath(path: String) -> Bool {
         let fileManager = NSFileManager.defaultManager()
         let now = NSDate()
         do {
